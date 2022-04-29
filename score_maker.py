@@ -15,7 +15,7 @@ db202203301935_low = '(description= (retry_count=20)(retry_delay=3)(address=(pro
 
 
 def init_client():
-    cx_Oracle.init_oracle_client(lib_dir=os.path.dirname(os.path.abspath(__file__)) + "\oracleBasic")
+    cx_Oracle.init_oracle_client(lib_dir=os.path.dirname(os.path.abspath(__file__)) + "/oracleBasic")
     global client
     client = True
 
