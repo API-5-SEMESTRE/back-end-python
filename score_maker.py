@@ -11,6 +11,8 @@ from random import randint
 #ToDo pegar os dados do consumo e verificar o cnpj pra ver o cnae
 
 client = False
+db202203301935_low = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-saopaulo-1.oraclecloud.com))(connect_data=(service_name=g5a8d282e2d63db_db202203301935_low.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.sa-saopaulo-1.oraclecloud.com, OU=Oracle ADB SAOPAULO, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
+
 
 def init_client():
     cx_Oracle.init_oracle_client(lib_dir=os.path.dirname(os.path.abspath(__file__)) + "\oracleBasic")
@@ -73,11 +75,11 @@ def analyse_consumo(consumo_separated):
 def score_maker():
     print("start")
     start = time.time()
-    db202203301935_low = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-saopaulo-1.oraclecloud.com))(connect_data=(service_name=g5a8d282e2d63db_db202203301935_low.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.sa-saopaulo-1.oraclecloud.com, OU=Oracle ADB SAOPAULO, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
 
     global client
     if not client:
         init_client()
+    global db202203301935_low
 
     connection = cx_Oracle.connect(user="ADMIN", password="BDrelacional5", dsn="db202203301935_low")
     print(cx_Oracle.version)
@@ -172,3 +174,19 @@ def score_maker():
 
     end = time.time()
     print(f"finish\nTime: {end - start}")
+
+
+def test_bd():
+    global client
+    if not client:
+        init_client()
+    global db202203301935_low
+    connection = cx_Oracle.connect(user="ADMIN", password="BDrelacional5", dsn="db202203301935_low")
+    print(cx_Oracle.version)
+    cursor = connection.cursor()
+    c = cursor.execute("SELECT * FROM cidade FETCH FIRST 20 ROWS ONLY")
+    list = []
+    for i in c:
+        print(i)
+        list.append(i)
+    return list
