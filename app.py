@@ -2,6 +2,7 @@ from flask import Flask, send_file
 from graph_maker import graph
 import zipfile
 import os
+from score_maker import score_maker
 
 app = Flask(__name__)
 
@@ -20,3 +21,8 @@ def unzip_oracle():
         with zipfile.ZipFile("oracleBasic.zip", 'r') as zip_ref:
             zip_ref.extractall("")
         return "<b>Done, hopefully</b>"
+
+@app.route("/score")
+def get_score():
+    score_maker()
+    return send_file("scores-sample.csv", mimetype="file/csv")
