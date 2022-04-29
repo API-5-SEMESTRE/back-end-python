@@ -1,3 +1,4 @@
+cx-oracle
 flask
 gunicorn
 matplotlib
