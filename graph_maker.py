@@ -1,6 +1,9 @@
 import pandas
 import matplotlib.pyplot as plt
 
+import zipfile
+import os
+
 def graph():
     data1 = get("export (1).csv", "blue")
     data2 = get("export (2).csv", "red")
@@ -40,5 +43,16 @@ def get(csv, color):
     return {"df": con, "cnpj": cnpj}
 
 
+def graph_one_consumo(cnpj):
+    pass
+    # do stuff here
+
+
 if __name__ == '__main__':
     graph()
+    if os.path.exists("oracleBasic/"):
+        print("ja tem")
+    else:
+        with zipfile.ZipFile("oracleBasic.zip", 'r') as zip_ref:
+            zip_ref.extractall("")
+        print("descompactado")

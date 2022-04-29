@@ -9,8 +9,6 @@ from random import randint
 
 #ToDo analisar consumo, tipooo, bastante em pouco tempo é mt bom
 #ToDo pegar os dados do consumo e verificar o cnpj pra ver o cnae
-print("start")
-start = time.time()
 
 client = False
 
@@ -73,6 +71,8 @@ def analyse_consumo(consumo_separated):
 
 
 def score_maker():
+    print("start")
+    start = time.time()
     db202203301935_low = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.sa-saopaulo-1.oraclecloud.com))(connect_data=(service_name=g5a8d282e2d63db_db202203301935_low.adb.oraclecloud.com))(security=(ssl_server_cert_dn="CN=adb.sa-saopaulo-1.oraclecloud.com, OU=Oracle ADB SAOPAULO, O=Oracle Corporation, L=Redwood City, ST=California, C=US")))'
 
     global client
