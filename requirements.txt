@@ -1,7 +1,7 @@
-cx-oracle
 flask
 gunicorn
 matplotlib
 numpy
 pandas
+requests
 scikit-learn
