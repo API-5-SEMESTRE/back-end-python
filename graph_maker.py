@@ -66,6 +66,8 @@ def graph_one(cnpj=11924000193, format="png"):
     # pivot( eixo X, eixo Y, nome de referencia usado acima)
     result = result.pivot(index="Periodo", columns="Consumo - CNPJ", values="consumo")
     fig = result.plot(color=test_dict["color"]).get_figure()
+    if not os.path.exists("graphs"):
+        os.mkdir("graphs")
     file_name = f"graphs/test-{cnpj}.{format.lower()}"
     fig.savefig(file_name)
     return file_name
