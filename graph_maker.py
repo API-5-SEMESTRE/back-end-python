@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import zipfile
 import os
 import requests
+import json
 
 def graph_multiple(cnpj):
     r = requests.get(f"http://localhost:8080/consumo/consumo-por-cnpj/{cnpj}")
@@ -50,29 +51,53 @@ def transform_data(csv, color="blue"):
     return {"df": consumos, "cnpj": cnpj, "color": color}
 
 
+def transform(data, color="blue"):
+    # Pega os dados e ordena de uma forma que eu quero
+    print(data)
+    print(type(data))
+    dict = []
+    consumos = []
+    cnpj = ""
+    for i in data:
+        dict.append({"": i[1][0][:7], i[1][1]: i[1][2]})
+        cnpj = i[1][1]
+        consumos.append([cnpj, i[1][2], i[1][0][:7]])
+    df = pandas.DataFrame(dict)
+    df.to_csv(f"consumo-{cnpj}.csv", ";", index=False)
+    # Retorna um dict com uma lista dos consumos[cnpj, consumo, mes], o valor do cnpj e a cor
+    return {"df": consumos, "cnpj": cnpj, "color": color}
+
+
 def graph_one(cnpj=11924000193, format="png"):
     # Pega os dados utilizando endpoint do spring
-    #r = requests.get(f"http://localhost:8080/consumo/consumo-por-cnpj/{cnpj}")
-    #print(r.json())
+    r = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj}")
+    print(r.json()[0])
+    data = r.json()
     #data = r.json()[0]
     # Transformar os dados da request em df
     # do stuff here. Bim, Bam, Boom!
 
     # Usando dados do csv de exemplo
-    test_dict = transform_data("export (1).csv", "green")
+    #test_dict = transform_data("export (1).csv", "green")
     # A ordem que utilizo é:
     # DataFrame( lista de dicts, columns=[ nome da linha no grafico, nome de referencia pro values, nome do eixo X]
-    result = pandas.DataFrame(test_dict["df"], columns=["Consumo - CNPJ", "consumo", "Periodo"])
+    for i in range(len(data)):
+        data[i]["mesReferencia"] = data[i]["mesReferencia"][:7]
+    result = pandas.DataFrame(data)
+    result = result.rename(columns={"quantidadeConsumo": f"CNPJ: {cnpj}", "mesReferencia": "Mês"})
+    result = result.set_index("Mês")
+    print(result)
     # pivot( eixo X, eixo Y, nome de referencia usado acima)
-    result = result.pivot(index="Periodo", columns="Consumo - CNPJ", values="consumo")
-    fig = result.plot(color=test_dict["color"]).get_figure()
+    fig = result.plot().get_figure()
+    print(result)
+    #fig = result.plot(color="blue").get_figure()
     if not os.path.exists("graphs"):
         os.mkdir("graphs")
-    file_name = f"graphs/test-{cnpj}.{format.lower()}"
+    file_name = f"graphs/consumo-empresa-{cnpj}.{format.lower()}"
     fig.savefig(file_name)
     return file_name
 
 
 if __name__ == '__main__':
     #graph(11924000193)
-    graph_one(22, format="pdf")
+    graph_one()
