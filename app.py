@@ -35,5 +35,6 @@ def get_score():
 
 @app.route("/bd")
 def bd():
-    list = test_bd()
-    return f"{list}"
+    #list = test_bd()
+    #return f"{list}"
+    return "TESTING, YOU KNOW"

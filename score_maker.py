@@ -1,3 +1,5 @@
+import json
+
 import pandas
 import matplotlib.pyplot as plt
 import cx_Oracle
@@ -5,6 +7,7 @@ import os
 from time import time
 import time
 from random import randint
+import json
 
 
 #ToDo analisar consumo, tipooo, bastante em pouco tempo é mt bom
@@ -139,36 +142,6 @@ def score_maker():
     df.to_csv("scores-sample.csv", index=False, columns=["origem", "cnpj", "media_consumo", "total_consumo", "media_score", "total_score"], sep=";")
 
 
-
-
-    # print(empresa)
-    # empresas = pandas.read_csv(filepath_or_buffer="base_empresas.csv")
-    # consumo = pandas.read_csv(filepath_or_buffer="base_consumo.csv")
-    # cnae = pandas.read_csv(filepath_or_buffer="base_cnae.csv", encoding="windows-1252")
-    #
-    # print(consumo)
-    # print(empresas)
-    # print(cnae)
-    #
-
-    # for i, row in consumo.iterrows():
-    #     print(i)
-    #     print(row)
-    #     print(row["NUM_CNPJ"])
-    #     print("$" * 20)
-    # print(empresas._get_value(2, "NUM_CNPJ"))
-    # print(empresas["NUM_CNPJ"][2])
-    #
-    # print(empresas["NUM_CNPJ"].is_unique)
-
-
-    # empresas.cumsum()
-    # plt.figure()
-    # empresas.plot()
-    # plt.show()
-    #
-    # plt.savefig("graph.png")
-
     cursor.close()
     connection.close()
 
@@ -190,3 +163,64 @@ def test_bd():
         print(i)
         list.append(i)
     return list
+
+
+def test_with_json():
+    f = open("export2.json")
+    json_ = json.load(f)
+    consumo = []
+    score = []
+    regiao = []
+    for data in json_:
+        if json_.index(data) + 1 == len(json_):
+            consumo.append(data["cons_consumo"])
+            sc = analyse_consumo(consumo)
+            score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)),
+                          "total_score": sc[0], "media_score": sc[1],
+                          "consumos": consumo, "cnpj": data["emp_cnpj"],
+                          "origem": data["emp_origem"], "regiao": data["cid_reg_ibge"]})
+            consumo = []
+        else:
+            if data["emp_cnpj"] == json_[json_.index(data) + 1]["emp_cnpj"]:
+                consumo.append(data["cons_consumo"])
+            else:
+                consumo.append(data["cons_consumo"])
+                sc = analyse_consumo(consumo)
+                if sc[0] > 00:
+                    regiao.append({"regiao": data["cid_reg_ibge"], "score": sc[0]})
+                score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)),
+                          "total_score": sc[0], "media_score": sc[1],
+                          "consumos": consumo, "cnpj": data["emp_cnpj"],
+                          "origem": data["emp_origem"], "regiao": data["cid_reg_ibge"]})
+                consumo = []
+
+    centro = 0
+    norte = 0
+    nordeste = 0
+    sul = 0
+    sudeste = 0
+    for i in regiao:
+        if i["regiao"] == "CENTRO-OESTE":
+            centro += 1
+        elif i["regiao"] == "NORDESTE":
+            nordeste += 1
+        elif i["regiao"] == "NORTE":
+            norte += 1
+        elif i["regiao"] == "SUDESTE":
+            sudeste += 1
+        elif i["regiao"] == "SUL":
+            sul += 1
+    print(f"CENTRO-{centro}\nNORDESTE-{nordeste}\nNORTE-{norte}\nSUDESTE-{sudeste}\nSUL-{sul}")
+
+    df = pandas.DataFrame(regiao)
+    df.to_csv("regiao.csv", index=False, sep=";")
+
+    # df = pandas.DataFrame(score)
+    # df.to_csv("scores-sample.csv", index=False,
+    #           columns=["origem", "cnpj", "media_consumo", "total_consumo", "media_score", "total_score", "regiao"], sep=";")
+
+
+
+if __name__ == '__main__':
+    #test_with_json()
+    pass
