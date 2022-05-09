@@ -6,30 +6,55 @@ import os
 import requests
 import json
 
-def graph_multiple(cnpj):
-    r = requests.get(f"http://localhost:8080/consumo/consumo-por-cnpj/{cnpj}")
-    print(r.json())
-    data1 = transform_data("export (1).csv", "blue")
-    data2 = transform_data("export (2).csv", "red")
-    print(data1["df"])
-    for i in data2["df"]:
-        data1["df"].append(i)
 
-    print(data1["df"])
+def graph_multiple(cnpj1, cnpj2, format="png"):
+    r1 = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj1}")
+    r2 = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj2}")
+    data1 = r1.json()
+    data2 = r2.json()
+    if len(data2) > len(data1):
+        old_data1 = data1
+        data1 = data2
+        data2 = old_data1
+    for i in range(len(data1)):
+        data1[i]["mesReferencia"] = data1[i]["mesReferencia"][:7]
+    for i in range(len(data2)):
+        data2[i]["mesReferencia"] = data2[i]["mesReferencia"][:7]
+    result = pandas.DataFrame(data1)
+    result = result.rename(columns={"quantidadeConsumo": f"CNPJ: {cnpj1}", "mesReferencia": "Mês"})
+    result = result.set_index("Mês")
+    ax = result.plot(color="blue")
+    result = pandas.DataFrame(data2)
+    result = result.rename(columns={"quantidadeConsumo": f"CNPJ: {cnpj2}", "mesReferencia": "Mês"})
+    fig = result.plot(ax=ax, color="green").get_figure()
+    if not os.path.exists("graphs"):
+        os.mkdir("graphs")
+    file_name = f"graphs/consumo-empresas-{cnpj1}-{cnpj2}.{format.lower()}"
+    fig.savefig(file_name)
+    return file_name
 
-    #fig = data1["df"].plot(x="", y=data1["cnpj"], kind="line", figsize=(5, 4)).get_figure()
 
-    result = {"data": [data1["df"], data2["df"]], "month": [1, 2, 3, 4, 5, 6]}
-    result = pandas.DataFrame(data1["df"], columns=["colors", "y", "x"])
-    result = result.pivot(index="x", columns="colors", values="y")
-    #fig = result.plot(x="data", y="month", kind="line").get_figure()
-    fig = result.plot(color=result.columns).get_figure()
-
-
-    #plt.show()
-    name = f"consumos-{data1['cnpj']}.png"
-    fig.savefig(name)
-    return name
+    # data1 = transform_data("export (1).csv", "blue")
+    # data2 = transform_data("export (2).csv", "red")
+    # print(data1["df"])
+    # for i in data2["df"]:
+    #     data1["df"].append(i)
+    #
+    # print(data1["df"])
+    #
+    # #fig = data1["df"].plot(x="", y=data1["cnpj"], kind="line", figsize=(5, 4)).get_figure()
+    #
+    # result = {"data": [data1["df"], data2["df"]], "month": [1, 2, 3, 4, 5, 6]}
+    # result = pandas.DataFrame(data1["df"], columns=["colors", "y", "x"])
+    # result = result.pivot(index="x", columns="colors", values="y")
+    # #fig = result.plot(x="data", y="month", kind="line").get_figure()
+    # fig = result.plot(color=result.columns).get_figure()
+    #
+    #
+    # #plt.show()
+    # name = f"consumos-{data1['cnpj']}.png"
+    # fig.savefig(name)
+    # return name
 
 
 # No momento recebe csv porque é teste. Mudar porque irá receber um dict
@@ -100,4 +125,5 @@ def graph_one(cnpj=11924000193, format="png"):
 
 if __name__ == '__main__':
     #graph(11924000193)
-    graph_one()
+    #graph_one()
+    graph_multiple(11924000193, 97554065000110)

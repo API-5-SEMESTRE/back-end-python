@@ -1,5 +1,5 @@
 from flask import Flask, send_file
-from graph_maker import graph_one
+from graph_maker import graph_one, graph_multiple
 import zipfile
 import os
 from score_maker import score_maker, test_bd
@@ -24,6 +24,19 @@ def graph(cnpj):
 def graph_format(cnpj, format):
     file_name = graph_one(cnpj, format)
     return send_file(file_name, mimetype="file/pdf")
+
+
+@app.route("/graphs/consumo/<cnpj1>/<cnpj2>")
+def graph_double(cnpj1, cnpj2):
+    file_name = graph_multiple(cnpj1, cnpj2)
+    return send_file(file_name, mimetype="image/png")
+
+
+@app.route("/graphs/consumo/<cnpj1>/<cnpj2>/<format>")
+def graph_double_format(cnpj1, cnpj2, format):
+    file_name = graph_multiple(cnpj1, cnpj2, format)
+    return send_file(file_name, mimetype="file/pdf")
+
 
 
 @app.route("/score")
