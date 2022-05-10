@@ -29,8 +29,8 @@ def graph_multiple(cnpj1, cnpj2, format="png"):
     fig = result.plot(ax=ax, color="green").get_figure()
     if not os.path.exists("graphs"):
         os.mkdir("graphs")
-    file_name = f"graphs/consumo-empresas-{cnpj1}-{cnpj2}.{format.lower()}"
-    fig.savefig(file_name)
+    file_name = f"consumo-empresa-{cnpj1}-{cnpj2}.{format.lower()}"
+    fig.savefig(f"graphs/{file_name}")
     return file_name
 
 
