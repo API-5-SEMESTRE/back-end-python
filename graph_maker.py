@@ -118,8 +118,8 @@ def graph_one(cnpj=11924000193, format="png"):
     #fig = result.plot(color="blue").get_figure()
     if not os.path.exists("graphs"):
         os.mkdir("graphs")
-    file_name = f"graphs/consumo-empresa-{cnpj}.{format.lower()}"
-    fig.savefig(file_name)
+    file_name = f"consumo-empresa-{cnpj}.{format.lower()}"
+    fig.savefig(f"graphs/{file_name}")
     return file_name
 
 
