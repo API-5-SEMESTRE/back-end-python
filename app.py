@@ -1,5 +1,5 @@
 from flask import Flask, send_file, send_from_directory
-from graph_maker import graph_one, graph_multiple
+from graph_maker import graph_one, graph_multiple, graph_ranking_vendedor_top3
 import zipfile
 import os
 from score_maker import score_maker, test_bd
@@ -49,6 +49,22 @@ def graph_double(cnpj1, cnpj2):
 @app.route("/graphs/consumo/<cnpj1>/<cnpj2>/<format>/")
 def graph_double_format(cnpj1, cnpj2, format):
     file_name = graph_multiple(cnpj1, cnpj2, format)
+    path = str(os.path.dirname(os.path.abspath(__file__))) + "/graphs/"
+    print(path)
+    return send_from_directory(path, file_name)
+
+
+@app.route("/graph/ranking-top3/")
+def graph_ranking_top3():
+    file_name = graph_ranking_vendedor_top3()
+    path = str(os.path.dirname(os.path.abspath(__file__))) + "/graphs/"
+    print(path)
+    return send_from_directory(path, file_name)
+
+
+@app.route("/graph/ranking-top3/<format>/")
+def graph_ranking_top3_format(format):
+    file_name = graph_ranking_vendedor_top3(format)
     path = str(os.path.dirname(os.path.abspath(__file__))) + "/graphs/"
     print(path)
     return send_from_directory(path, file_name)

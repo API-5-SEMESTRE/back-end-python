@@ -1,3 +1,4 @@
+import numpy
 import pandas
 import matplotlib.pyplot as plt
 
@@ -96,7 +97,7 @@ def transform(data, color="blue"):
 def graph_one(cnpj=11924000193, format="png"):
     # Pega os dados utilizando endpoint do spring
     r = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj}")
-    print(r.json()[0])
+    print(r.json())
     data = r.json()
     #data = r.json()[0]
     # Transformar os dados da request em df
@@ -123,7 +124,28 @@ def graph_one(cnpj=11924000193, format="png"):
     return file_name
 
 
+def graph_ranking_vendedor_top3(format="png"):
+    r = requests.get(f"http://localhost:8080/usuario/ranking-vendedor/")
+    data = r.json()
+    dict = {"vendedores": [], "consumo": []}
+    for i in data:
+        print(i)
+        dict["vendedores"].append(i)
+        dict["consumo"].append(data[i])
+    result = pandas.DataFrame({"Vendedor": dict["vendedores"], "Consumo": dict["consumo"]})
+    fig = result.plot.bar(x="Vendedor", y="Consumo", rot=0, color=plt.cm.Paired(numpy.arange(len(result)))).get_figure()
+    if not os.path.exists("graphs"):
+        os.mkdir("graphs")
+    file_name = f"ranking-vendedor.{format.lower()}"
+    fig.savefig(f"graphs/{file_name}")
+    return file_name
+
+
 if __name__ == '__main__':
     #graph(11924000193)
     #graph_one()
-    graph_multiple(11924000193, 97554065000110)
+    #graph_multiple(11924000193, 97554065000110)
+    #graph_ranking_vendedor_top3()
+    pass
+
+
