@@ -23,49 +23,52 @@ def init_client():
     client = True
 
 
-def analyse_consumo(consumo_separated):
+def analyse_consumo(consumo_separated, region):
+    regions = ["sudeste", "nordeste", "sul", "centro-oeste", "norte"]
+    region_multiplier = regions.index(region.lower()) + 1
     score = []
-    multiplier = 0.25
+    multiplier = 0.20 + region_multiplier * 0.011
     size = len(consumo_separated)
     # Números inventandos, eu queria limitar as variaveis desse "score" pro maximo ser 4 e o mínimo 0.3
     # Se for num "streak" de coisas ruins (menos q o mes passado e valor mt baixo) é punido baseado no consumo da vez
     # Streak alto eleva baseado no consumo da vez. Assim achei q ficou mais dinamico e mais interessante
     for valor in consumo_separated:
-        if sum(score) > 65:
-            multiplier = 0.25
+        if sum(score) > 60:
+            print(f"Score high! {sum(score)}")
+            multiplier = 0.20 + region_multiplier * 0.005
         if consumo_separated.index(valor) == 0:
             pass
         else:
             if valor >= consumo_separated[consumo_separated.index(valor) - 1] * 1.15:
                 score.append(2.7)
                 if valor >= 2300:
-                    score.append(3.7 + valor * 0.005)
+                    score.append(3.7 + valor * 0.005 + region_multiplier * 2.5)
                 elif valor >= 1400:
                     score.append(1.7)
                 elif valor >= 800:
-                    score.append(0.7)
+                    score.append(0.7 + region_multiplier - 3)
                 else:
-                    score.append(0.4 - valor * 0.007)
+                    score.append(0.4 - valor * 0.007 + (region_multiplier * 0.4 - 1.7))
             elif valor <= consumo_separated[consumo_separated.index(valor) - 1] * 0.75:
                 score.append(1)
                 if valor >= 2300:
-                    score.append(2.7 + valor * 0.005)
+                    score.append(2.7 + valor * 0.005 + region_multiplier * 2.5)
                 elif valor >= 1400:
                     score.append(1.5)
                 elif valor >= 800:
-                    score.append(0.7)
+                    score.append(0.7 + region_multiplier - 3)
                 else:
-                    score.append(0.4 - valor * 0.007)
+                    score.append(0.4 - valor * 0.007 + (region_multiplier * 0.4 - 1.7))
             else:
                 score.append(1.5)
                 if valor >= 2300:
-                    score.append(2.7 + valor * 0.005)
+                    score.append(2.7 + valor * 0.005 + region_multiplier * 2.5)
                 elif valor >= 1400:
                     score.append(1.5)
                 elif valor >= 800:
-                    score.append(0.7)
+                    score.append(0.7 + region_multiplier - 3)
                 else:
-                    score.append(0.3 - valor * 0.007)
+                    score.append(0.3 - valor * 0.007 + (region_multiplier * 0.4 - 1.7))
     # Faz uma média desse "score" e do consumo pra gerar um score final.
     # Vendo quem tem mais scorefinal da pra conferir se tem outras empresas de ramos semelhantes do concorrente ou livre
     #print(f"soma {(sum(score) / size) * 20} -- consumos {(sum(consumo_separated) / size) * multiplier}")
@@ -95,12 +98,15 @@ def score_maker():
     #     conc.append(i)
 
     #1500 empresas do consumo_table e conc, cada
-    c = cursor.execute("SELECT * FROM consumo c INNER JOIN empresa e ON e.emp_cnpj = c.emp_cnpj ORDER BY c.emp_cnpj, c.cons_mesref")
+
+
+    #c = cursor.execute("SELECT * FROM consumo c INNER JOIN empresa e ON e.emp_cnpj = c.emp_cnpj ORDER BY c.emp_cnpj, c.cons_mesref")
+    c = cursor.execute("SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.EMP_ORIGEM, CI.CID_REG_IBGE FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
     consumo_table = []
     for i in c:
         consumo_table.append(i)
+        print(i)
     #print(consumo_table)
-
 
     plot = []
     consumo = []
@@ -110,9 +116,9 @@ def score_maker():
             #print(data[2])
             consumo.append(data[2])
             #print(f"TOTAL DO CLIENTE {data[1]} - {sum(consumo)}")
-            sc = analyse_consumo(consumo)
+            sc = analyse_consumo(consumo, data[5])
             #print(f"SCORE: {sc}\n-------------------")
-            score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[6]})
+            score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[4], "regiao": data[5]})
             consumo = []
         else:
             if data[1] == consumo_table[consumo_table.index(data) + 1][1]:
@@ -122,9 +128,9 @@ def score_maker():
                 #print(data[2])
                 consumo.append(data[2])
                 #print(f"TOTAL DO CLIENTE {data[1]} - {sum(consumo)}")
-                sc = analyse_consumo(consumo)
+                sc = analyse_consumo(consumo, data[5])
                 #print(f"SCORE: {sc}\n-------------------")
-                score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo)/len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[6]})
+                score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo)/len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[4], "regiao": data[5]})
                 consumo = []
 
     print(len(score))
@@ -139,7 +145,7 @@ def score_maker():
 
 
     df = pandas.DataFrame(score)
-    df.to_csv("scores-sample.csv", index=False, columns=["origem", "cnpj", "media_consumo", "total_consumo", "media_score", "total_score"], sep=";")
+    df.to_csv("scores-sample.csv", index=False, columns=["origem", "cnpj", "regiao", "media_consumo", "total_consumo", "media_score", "total_score"], sep=";")
 
 
     cursor.close()
@@ -219,8 +225,58 @@ def test_with_json():
     # df.to_csv("scores-sample.csv", index=False,
     #           columns=["origem", "cnpj", "media_consumo", "total_consumo", "media_score", "total_score", "regiao"], sep=";")
 
+def consumo_regiao():
+    global client
+    if not client:
+        init_client()
+    global db202203301935_low
+
+    connection = cx_Oracle.connect(user="ADMIN", password="BDrelacional5", dsn="db202203301935_low")
+    print(cx_Oracle.version)
+    cursor = connection.cursor()
+    c = cursor.execute(
+        "SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.EMP_ORIGEM, CI.CID_REG_IBGE FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
+    consumo_table = []
+    for data in c:
+        consumo_table.append(data)
+
+    centro = 0
+    centroc = 0
+    norte = 0
+    nortec = 0
+    nordeste = 0
+    nordestec = 0
+    sul = 0
+    sulc = 0
+    sudeste = 0
+    sudestec = 0
+    for data in consumo_table:
+        if data[2] < 250:
+            if data[5] == "CENTRO-OESTE":
+                centro += data[2]
+                centroc += 1
+            elif data[5] == "NORDESTE":
+                nordeste += data[2]
+                nordestec += 1
+            elif data[5] == "NORTE":
+                norte += data[2]
+                nortec += 1
+            elif data[5] == "SUDESTE":
+                sudestec += 1
+                sudeste += data[2]
+            elif data[5] == "SUL":
+                sul += data[2]
+                sulc += 1
+    print(f"CENTRO-{centro}\nNORDESTE-{nordeste}\nNORTE-{norte}\nSUDESTE-{sudeste}\nSUL-{sul}")
+    print("-"*30)
+    print(f"CENTRO-{centroc}\nNORDESTE-{nordestec}\nNORTE-{nortec}\nSUDESTE-{sudestec}\nSUL-{sulc}")
+
+
+
 
 
 if __name__ == '__main__':
     #test_with_json()
+    score_maker()
+    #consumo_regiao()
     pass
