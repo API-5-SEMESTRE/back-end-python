@@ -9,8 +9,8 @@ import json
 
 
 def graph_multiple(cnpj1, cnpj2, format="png"):
-    r1 = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj1}")
-    r2 = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj2}")
+    r1 = requests.get(f"https://score-analysis-system-back.herokuapp.com/consumo/lista-consumo-empresa/{cnpj1}")
+    r2 = requests.get(f"https://score-analysis-system-back.herokuapp.com/consumo/lista-consumo-empresa/{cnpj2}")
     data1 = r1.json()
     data2 = r2.json()
     if len(data2) > len(data1):
@@ -96,7 +96,7 @@ def transform(data, color="blue"):
 
 def graph_one(cnpj=11924000193, format="png"):
     # Pega os dados utilizando endpoint do spring
-    r = requests.get(f"http://localhost:8080/consumo/lista-consumo-empresa/{cnpj}")
+    r = requests.get(f"https://score-analysis-system-back.herokuapp.com/consumo/lista-consumo-empresa/{cnpj}")
     print(r.json())
     data = r.json()
     #data = r.json()[0]
@@ -125,7 +125,7 @@ def graph_one(cnpj=11924000193, format="png"):
 
 
 def graph_ranking_vendedor_top3(format="png"):
-    r = requests.get(f"http://localhost:8080/usuario/ranking-vendedor/")
+    r = requests.get(f"https://score-analysis-system-back.herokuapp.com/usuario/ranking-vendedor/")
     data = r.json()
     dict = {"vendedores": [], "consumo": []}
     for i in data:
