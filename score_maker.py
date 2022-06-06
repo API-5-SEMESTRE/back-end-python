@@ -8,6 +8,7 @@ from time import time
 import time
 from random import randint
 import json
+import numpy as np
 
 
 #ToDo analisar consumo, tipooo, bastante em pouco tempo é mt bom
@@ -34,7 +35,7 @@ def analyse_consumo(consumo_separated, region):
     # Streak alto eleva baseado no consumo da vez. Assim achei q ficou mais dinamico e mais interessante
     for valor in consumo_separated:
         if sum(score) > 60:
-            print(f"Score high! {sum(score)}")
+            #print(f"Score high! {sum(score)}")
             multiplier = 0.20 + region_multiplier * 0.005
         if consumo_separated.index(valor) == 0:
             pass
@@ -71,7 +72,7 @@ def analyse_consumo(consumo_separated, region):
                     score.append(0.3 - valor * 0.007 + (region_multiplier * 0.4 - 1.7))
     # Faz uma média desse "score" e do consumo pra gerar um score final.
     # Vendo quem tem mais scorefinal da pra conferir se tem outras empresas de ramos semelhantes do concorrente ou livre
-    #print(f"soma {(sum(score) / size) * 20} -- consumos {(sum(consumo_separated) / size) * multiplier}")
+    print(f"soma {(sum(score) / size) * 20} -- consumos {(sum(consumo_separated) / size) * multiplier}")
     final_score = (sum(score) / size) * 20 + (sum(consumo_separated) / size) * multiplier
     if final_score > 1000:
         final_score = 1000
@@ -87,7 +88,7 @@ def score_maker():
         init_client()
     global db202203301935_low
 
-    connection = cx_Oracle.connect(user="ADMIN", password="BDrelacional5", dsn="db202203301935_low")
+    connection = cx_Oracle.connect(user="ADMIN", password="BDrelacional5", dsn="db202203301935_low", encoding="utf8", nencoding="utf8")
     print(cx_Oracle.version)
     cursor = connection.cursor()
 
@@ -101,7 +102,7 @@ def score_maker():
 
 
     #c = cursor.execute("SELECT * FROM consumo c INNER JOIN empresa e ON e.emp_cnpj = c.emp_cnpj ORDER BY c.emp_cnpj, c.cons_mesref")
-    c = cursor.execute("SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.EMP_ORIGEM, CI.CID_REG_IBGE FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
+    c = cursor.execute("SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.EMP_ORIGEM, CI.CID_REG_IBGE, CI.CID_SIGLA_ESTADO, CN.CNAE_DESC FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID INNER JOIN CNAE CN ON CN.CNAE_ID = E.CNAE_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
     consumo_table = []
     for i in c:
         consumo_table.append(i)
@@ -111,6 +112,7 @@ def score_maker():
     plot = []
     consumo = []
     score = []
+    total_consumo = [0, 0, 0, 0, 0, 0]
     for data in consumo_table:
         if consumo_table.index(data) + 1 == len(consumo_table):
             #print(data[2])
@@ -118,7 +120,12 @@ def score_maker():
             #print(f"TOTAL DO CLIENTE {data[1]} - {sum(consumo)}")
             sc = analyse_consumo(consumo, data[5])
             #print(f"SCORE: {sc}\n-------------------")
-            score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[4], "regiao": data[5]})
+            score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo) / len(consumo)),
+                          "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1],
+                          "origem": data[4], "regiao": data[5], "estado": data[6], "cnae": data[7],
+                          "mediana": np.median(consumo), "desvio_pd": int(np.std(consumo)),
+                          "variancia": int(np.var(consumo)), "cnae_id": data[3]})
+
             consumo = []
         else:
             if data[1] == consumo_table[consumo_table.index(data) + 1][1]:
@@ -130,7 +137,14 @@ def score_maker():
                 #print(f"TOTAL DO CLIENTE {data[1]} - {sum(consumo)}")
                 sc = analyse_consumo(consumo, data[5])
                 #print(f"SCORE: {sc}\n-------------------")
-                score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo)/len(consumo)), "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1], "origem": data[4], "regiao": data[5]})
+                score.append({"total_consumo": sum(consumo), "media_consumo": int(sum(consumo)/len(consumo)),
+                              "total_score": sc[0], "media_score": sc[1], "consumos": consumo, "cnpj": data[1],
+                              "origem": data[4], "regiao": data[5], "estado": data[6], "cnae": data[7],
+                              "mediana": np.median(consumo), "desvio_pd": int(np.std(consumo)), "variancia": int(np.var(consumo)),
+                              "cnae_id": data[3]})
+                print(consumo)
+                print(f"desvio_pd -- {int(np.std(consumo))}  ||  variancia -- {int(np.var(consumo))}")
+
                 consumo = []
 
     print(len(score))
@@ -143,10 +157,9 @@ def score_maker():
     # for i in c:
     #     print(i)
 
-
     df = pandas.DataFrame(score)
-    df.to_csv("scores-sample.csv", index=False, columns=["origem", "cnpj", "regiao", "media_consumo", "total_consumo", "media_score", "total_score"], sep=";")
-
+    df.to_csv("scores-sample.csv", index=False, columns=["origem", "cnpj", "cnae", "cnae_id", "regiao", "estado", "media_consumo", "total_consumo",
+                                                         "mediana", "desvio_pd", "variancia", "media_score", "total_score"], sep=";")
 
     cursor.close()
     connection.close()
@@ -235,7 +248,8 @@ def consumo_regiao():
     print(cx_Oracle.version)
     cursor = connection.cursor()
     c = cursor.execute(
-        "SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.EMP_ORIGEM, CI.CID_REG_IBGE FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
+        "SELECT C.CONS_MESREF, C.EMP_CNPJ, C.CONS_CONSUMO, E.CNAE_ID, E.CANE_DESC, E.EMP_ORIGEM, CI.CID_REG_IBGE, CI.CID_SIGLA_ESTADO "
+        "FROM CONSUMO C INNER JOIN EMPRESA E ON E.EMP_CNPJ = C.EMP_CNPJ INNER JOIN CIDADE CI ON E.CID_ID = CI.CID_ID ORDER BY C.EMP_CNPJ, C.CONS_MESREF")
     consumo_table = []
     for data in c:
         consumo_table.append(data)
